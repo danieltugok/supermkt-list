@@ -1,0 +1,20 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "items": {
+      ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'danieltugok@gmail.com' || auth.token.email == 'lahagge89@gmail.com')",
+      ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'danieltugok@gmail.com' || auth.token.email == 'lahagge89@gmail.com')",
+      "$id": {
+        ".validate": "newData.hasChildren(['name', 'bought'])",
+        "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
+        "category": { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "bought": { ".validate": "newData.isBoolean()" },
+        "order": { ".validate": "newData.isNumber()" },
+        "updatedBy": { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
