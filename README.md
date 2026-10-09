@@ -18,6 +18,7 @@ Firebase Authentication (Google) and Firebase Realtime Database.
 | `firebase-config.js` | Firebase web config (public values, safe to ship) |
 | `database.rules.json` | Security rules: copy into Firebase console to publish (not read by the app) |
 | `sw.js` | Service worker (offline). Bump `VERSION` after every deploy |
+| `.htaccess` | Blocks `README.md`, `database.rules.json` and `.git` from being downloaded on the site |
 | `manifest.webmanifest`, `icons/` | PWA install info and icons |
 
 ---
@@ -107,7 +108,7 @@ Open http://localhost:8080 (Google login works on `localhost` without extra setu
 
 ## Deploy to Hostinger
 1. Upload everything in this folder (the contents, not the folder itself) to `public_html` via hPanel > File Manager or FTP.
-   `README.md` and `database.rules.json` are not needed on the server.
+   `README.md` and `database.rules.json` are not needed on the server (the included `.htaccess` blocks them from public download).
 2. Add the Hostinger address to Firebase **Authorized domains** (see above).
 3. Bump `VERSION` in `sw.js` (e.g. `v3` -> `v4`) before uploading, so phones pick up the update.
    The service worker serves cached files first and updates in the background, so open the app twice to see changes.
