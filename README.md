@@ -20,7 +20,7 @@ Firebase Authentication (Google) and Firebase Realtime Database.
 | `index.html`, `styles.css`, `app.js` | The app (UI, auth, realtime logic, drag and drop) |
 | `firebase-config.js` | Firebase web config (public values, safe to ship) |
 | `database.rules.json` | Security rules: copy into Firebase console to publish (not read by the app) |
-| `sw.js` | Service worker (offline) and the app version (`APP_VERSION`). Bump it on every deploy |
+| `sw.js` | Service worker (offline). Imports `version.js` |
 | `.htaccess` | Blocks `README.md`, `CHANGELOG.md`, `database.rules.json` and `.git` from being downloaded on the site |
 | `CHANGELOG.md` | What changed in each version |
 | `manifest.webmanifest`, `icons/` | PWA install info and icons |
@@ -121,16 +121,16 @@ Open http://localhost:8080 (Google login works on `localhost` without extra setu
 1. Upload everything in this folder (the contents, not the folder itself) to `public_html` via hPanel > File Manager or FTP.
    `README.md` and `database.rules.json` are not needed on the server (the included `.htaccess` blocks them from public download).
 2. Add the Hostinger address to Firebase **Authorized domains** (see above).
-3. Bump `APP_VERSION` in `sw.js` and add a line to `CHANGELOG.md` (see Versioning and updates below).
+3. Change `APP_VERSION` in `version.js` and add a line to `CHANGELOG.md` (see Versioning and updates below).
 
 ## Versioning and updates
-- The version is `APP_VERSION` at the top of `sw.js` (shown at the bottom of the app as "Version x.y.z").
+- The version is `APP_VERSION` in `version.js` (shown at the bottom of the app as "Version x.y.z").
 - Use `MAJOR.MINOR.PATCH`: MINOR for a bundle of new features (1.1.0), PATCH for fixes (1.0.1). Add an entry to `CHANGELOG.md`.
-- **Always bump it when you deploy.** Phones only download new files when `sw.js` changes; without a bump nobody gets the update.
+- **Always bump it when you deploy.** Phones only download new files when the version changes; without a bump nobody gets the update.
 - Flow on the phones: the app notices the new version, downloads it in the background and shows a banner
   "Version x.y.z is ready" with a **Refresh** button. Tapping it reloads into the new version. The app also checks
   when it comes back to the foreground, and tapping the version label checks on demand.
-- To test locally: load the app, change `APP_VERSION` in `sw.js`, reload; the banner should appear.
+- To test locally: load the app, change `APP_VERSION` in `version.js`, reload; the banner should appear.
 
 ## Install on phone
 - Android (Chrome): menu > **Install app** / **Add to Home screen**.
@@ -145,7 +145,7 @@ Open http://localhost:8080 (Google login works on `localhost` without extra setu
 | Login popup blocked / does nothing | Allow popups for the site; the app falls back to a redirect on some browsers. |
 | List empty after login | New app reads `/items`. Old data is in `/shoppingList` (not migrated yet). |
 | Red bar "Something didn't load correctly" | Tap **Reset app**. It clears the cached app files and reloads (you stay signed in). |
-| Changes not showing after deploy | Did you bump `APP_VERSION` in `sw.js`? Check the Hostinger deployment finished, then tap the version label in the footer. |
+| Changes not showing after deploy | Did you change `APP_VERSION` in `version.js`? Check the Hostinger deployment finished, then tap the version label in the footer. |
 | Warning "rules are public" in console | Rules were never replaced. Publish `database.rules.json`. |
 
 ## Ideas for later

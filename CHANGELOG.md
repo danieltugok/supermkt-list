@@ -1,7 +1,12 @@
 # Changelog
 
 Versioning: `MAJOR.MINOR.PATCH`. Bump MINOR for a bundle of new features, PATCH for bug fixes.
-The version lives in ONE place: `APP_VERSION` at the top of `sw.js`. Bump it on every deploy.
+The version lives in ONE place: `APP_VERSION` in `version.js`. Bump it on every deploy.
+
+## 1.1.3
+- The footer version now comes from `version.js` (no longer depends on the service worker), so it always shows.
+- Console prints `App Version: x.y.z` on startup; the "latest version" message includes the number.
+- The version is typed in one place (`version.js`); the cache-busting `?v=` in the page is generated from it.
 
 ## 1.1.2
 - Fix: app files are now requested with a version in the URL (`?v=`), so Hostinger's CDN/server cache can't serve stale CSS/JS.

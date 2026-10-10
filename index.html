@@ -12,7 +12,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Supermarket">
-  <link rel="stylesheet" href="styles.css?v=1.1.2">
+  <script src="version.js"></script>
+  <script>document.write('<link rel="stylesheet" href="styles.css?v=' + self.APP_VERSION + '">');</script>
 </head>
 <body>
 <div id="recover" class="update" role="alert" hidden>
@@ -175,6 +176,9 @@
   });
 })();
 </script>
-<script type="module" src="app.js?v=1.1.2"></script>
+<script>
+// app.js is loaded with the version in its URL, so a new version can never be answered from an old cache.
+var s = document.createElement("script"); s.type = "module"; s.src = "app.js?v=" + self.APP_VERSION; document.body.appendChild(s);
+</script>
 </body>
 </html>

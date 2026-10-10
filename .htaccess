@@ -15,7 +15,7 @@ RedirectMatch 404 /\.git
 # Always revalidate the app files so browsers and the CDN never serve a stale copy
 # (a 304 response keeps this cheap). Images/icons can stay cached.
 <IfModule mod_headers.c>
-  <FilesMatch "^(index\.html|sw\.js|app\.js|styles\.css|firebase-config\.js|manifest\.webmanifest)$">
+  <FilesMatch "^(index\.html|sw\.js|version\.js|app\.js|styles\.css|firebase-config\.js|manifest\.webmanifest)$">
     Header set Cache-Control "no-cache, must-revalidate"
   </FilesMatch>
 </IfModule>

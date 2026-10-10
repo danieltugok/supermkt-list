@@ -6,7 +6,10 @@ import {
 import {
   getDatabase, ref, onValue, push, update, remove, set
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-import { firebaseConfig, ownerEmails } from "./firebase-config.js?v=1.1.2";
+import { firebaseConfig, ownerEmails } from "./firebase-config.js";
+
+const APP_VERSION = window.APP_VERSION || "unknown";
+console.log(`App Version: ${APP_VERSION}`);
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -908,12 +911,9 @@ function askVersion(worker) {
   });
 }
 
-async function showVersion() {
-  const worker = navigator.serviceWorker.controller || swReg?.active;
-  if (!worker) return;
-  const v = await askVersion(worker);
-  // An older service worker can't answer; show that instead of hiding the label.
-  els.version.textContent = v ? `Version ${v}` : "Version unknown (tap to check for updates)";
+function showVersion() {
+  // The version comes from version.js, loaded with the page: no service worker needed.
+  els.version.textContent = `Version ${APP_VERSION}`;
   els.version.hidden = false;
 }
 
@@ -935,8 +935,10 @@ els.version.addEventListener("click", async () => {
   if (!swReg) return;
   toast("Checking for updates…");
   try { await swReg.update(); } catch { toast("Couldn't check. Are you offline?"); return; }
-  setTimeout(() => { if (els.update.hidden) toast("You're on the latest version."); }, 1500);
+  setTimeout(() => { if (els.update.hidden) toast(`You're on the latest version (${APP_VERSION}).`); }, 1500);
 });
+
+showVersion();   // show it right away, even if the service worker is unavailable
 
 if ("serviceWorker" in navigator) {
   const hadController = !!navigator.serviceWorker.controller;
@@ -951,7 +953,7 @@ if ("serviceWorker" in navigator) {
   });
 
   window.addEventListener("load", async () => {
-    try { swReg = await navigator.serviceWorker.register("sw.js"); } catch { return; }
+    try { swReg = await navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }); } catch { return; }
     showVersion();
     if (swReg.waiting && navigator.serviceWorker.controller) offerUpdate(swReg.waiting);
     swReg.addEventListener("updatefound", () => {

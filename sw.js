@@ -1,14 +1,10 @@
-// ---------------------------------------------------------------------------
-// SINGLE SOURCE OF TRUTH for the app version.
-// Bump this on EVERY deploy (MINOR for new features, PATCH for fixes) and add a line to CHANGELOG.md.
-// Phones only notice an update when this file changes.
-// ---------------------------------------------------------------------------
-const APP_VERSION = "1.1.2";
+// The version lives in version.js (the only place to change it). The browser re-checks that file on every update check.
+importScripts("version.js");   // defines APP_VERSION
 
 const CACHE = `supermkt-${APP_VERSION}`;   // app files, replaced on every version
 const SDK_CACHE = "supermkt-sdk-1";          // Firebase SDK modules (versioned URLs, kept between app versions)
 const SHELL = [
-  "./", "index.html", "styles.css", "app.js", "firebase-config.js",
+  "./", "index.html", "styles.css", "version.js", "app.js", "firebase-config.js",
   "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"
 ];
 
