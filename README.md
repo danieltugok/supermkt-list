@@ -144,6 +144,7 @@ Open http://localhost:8080 (Google login works on `localhost` without extra setu
 | "No access" screen after login | That Google email isn't in `database.rules.json`, or the rules weren't published. |
 | Login popup blocked / does nothing | Allow popups for the site; the app falls back to a redirect on some browsers. |
 | List empty after login | New app reads `/items`. Old data is in `/shoppingList` (not migrated yet). |
+| Red bar "Something didn't load correctly" | Tap **Reset app**. It clears the cached app files and reloads (you stay signed in). |
 | Changes not showing after deploy | Did you bump `APP_VERSION` in `sw.js`? Check the Hostinger deployment finished, then tap the version label in the footer. |
 | Warning "rules are public" in console | Rules were never replaced. Publish `database.rules.json`. |
 

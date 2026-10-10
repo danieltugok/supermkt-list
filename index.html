@@ -15,6 +15,11 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div id="recover" class="update" role="alert" hidden>
+  <span>Something didn't load correctly. An old copy of the app may be cached.</span>
+  <button id="recover-btn" type="button">Reset app</button>
+</div>
+
 <div id="update" class="update" role="status" hidden>
   <span id="update-text">A new version is ready.</span>
   <button id="update-btn" type="button">Refresh</button>
@@ -152,6 +157,24 @@
 </dialog>
 
 <div id="toast" role="status" aria-live="polite"></div>
+<script>
+// Safety net: if app.js crashes or never starts, offer a one-tap reset (clears cached app files, keeps you signed in).
+(function () {
+  var panel = document.getElementById("recover");
+  function show() { if (panel) panel.hidden = false; }
+  window.addEventListener("error", function (e) { if (/\/(app|firebase-config)\.js/.test(e.filename || "")) show(); });
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e.reason;
+    if (r && (r instanceof TypeError || r instanceof ReferenceError) && /(app|firebase-config)\.js/.test(String(r.stack))) show();
+  });
+  setTimeout(function () { if (!window.__booted) show(); }, 8000);
+  document.getElementById("recover-btn").addEventListener("click", async function () {
+    try { var regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(function (r) { return r.unregister(); })); } catch (e) {}
+    try { var keys = await caches.keys(); await Promise.all(keys.map(function (k) { return caches.delete(k); })); } catch (e) {}
+    location.reload();
+  });
+})();
+</script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

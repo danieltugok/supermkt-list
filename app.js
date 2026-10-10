@@ -966,3 +966,6 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
+
+// Tells the safety net in index.html that the app started.
+window.__booted = true;

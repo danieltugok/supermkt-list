@@ -216,3 +216,6 @@ footer .link svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
 .filters .cnt { color: var(--muted); font-size: .85rem; }
 .filters .none { color: var(--muted); padding: 12px 4px; }
 .empty .link { display: inline; padding: 4px 6px; }
+
+#recover { background: #7a1f16; }
+#recover-btn { border: 0; border-radius: 8px; padding: 9px 16px; background: #fff; color: #7a1f16; font-weight: 600; }
