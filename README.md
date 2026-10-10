@@ -64,7 +64,7 @@ The earlier version of the site stored data under `/shoppingList`. That data is 
   (e.g. `la,hagge89@gmail,com`). Members can read and edit the list; only the owner can add or remove members.
 - Only signed-in, email-verified Google accounts count, and the email must match exactly.
 
-**To invite someone:** sign in as the owner, tap the **Share** icon (person with +), enter their Google email,
+**To invite someone:** sign in as the owner, tap **Share list** at the bottom of the page, enter their Google email,
 tap **Invite**, then tap the send icon next to their address to message them the link. (The app cannot send email by
 itself; it opens your phone's share sheet or mail app.) To remove someone: tap the X, then **Remove?**.
 Typed the wrong email? Just remove it and invite the correct one. You can also edit `/access/members` in the console.

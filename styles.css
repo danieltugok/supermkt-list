@@ -186,3 +186,8 @@ dialog h3 { font-size: 1rem; margin: 16px 0 6px; }
 .members .badge { font-size: .75rem; background: var(--field); padding: 2px 8px; border-radius: 10px; color: var(--muted); }
 .members .group-x svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .members .none { color: var(--muted); font-size: .9rem; border-top: 1px solid #e6e8ef; padding: 10px 0; }
+
+/* footer: Share list link */
+footer .link { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+footer .link svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
