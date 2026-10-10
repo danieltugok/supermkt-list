@@ -191,3 +191,14 @@ dialog h3 { font-size: 1rem; margin: 16px 0 6px; }
 footer .link { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 footer .link svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 #who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* update banner + version label */
+.update {
+  position: fixed; top: calc(8px + env(safe-area-inset-top)); left: 12px; right: 12px; max-width: 536px; margin: 0 auto; z-index: 60;
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px;
+  background: #2a2a2a; color: #fff; box-shadow: 0 6px 20px rgba(0, 0, 0, .3);
+}
+.update span { flex: 1; font-size: .95rem; }
+#update-btn { border: 0; border-radius: 8px; padding: 9px 16px; background: var(--teal); color: #fff; font-weight: 600; }
+#update-later { border: 0; background: none; color: #fff; font-size: 1.1rem; padding: 6px 8px; }
+.vlink { color: var(--muted); font-size: .8rem; }

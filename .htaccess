@@ -1,5 +1,5 @@
 # Keep non-app files from being downloadable from the website.
-<FilesMatch "^(README\.md|database\.rules\.json|\.gitignore|\.htaccess)$">
+<FilesMatch "^(README\.md|CHANGELOG\.md|database\.rules\.json|\.gitignore|\.htaccess)$">
   <IfModule mod_authz_core.c>
     Require all denied
   </IfModule>

@@ -15,6 +15,12 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div id="update" class="update" role="status" hidden>
+  <span id="update-text">A new version is ready.</span>
+  <button id="update-btn" type="button">Refresh</button>
+  <button id="update-later" type="button" aria-label="Dismiss">&#10005;</button>
+</div>
+
 <div class="wrap">
 
   <p id="boot" class="muted center">Loading…</p>
@@ -92,6 +98,7 @@
       </button>
       <button id="signout" class="link" type="button">Sign out</button>
     </footer>
+    <div class="center"><button id="version" class="link vlink" type="button" hidden aria-label="App version. Tap to check for updates"></button></div>
   </main>
 </div>
 

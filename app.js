@@ -22,7 +22,9 @@ const els = {
   shareMsg: $("#share-msg"), memberList: $("#member-list"),
   hide: $("#hide"), editBtn: $("#editmode"), banner: $("#edit-banner"), hint: $("#hint"), trip: $("#trip"), who: $("#who"), dot: $("#dot"),
   edit: $("#edit"), editForm: $("#edit-form"), editName: $("#edit-name"), editCat: $("#edit-cat"),
-  toast: $("#toast")
+  toast: $("#toast"),
+  update: $("#update"), updateText: $("#update-text"), updateBtn: $("#update-btn"), updateLater: $("#update-later"),
+  version: $("#version")
 };
 
 /* ---------- tiny safe storage ---------- */
@@ -805,7 +807,73 @@ els.memberList.addEventListener("click", (ev) => {
   }
 });
 
-/* ---------- PWA ---------- */
+/* ---------- PWA: version label + "new version" banner ---------- */
+let swReg = null;
+
+function askVersion(worker) {
+  return new Promise((resolve) => {
+    const ch = new MessageChannel();
+    ch.port1.onmessage = (e) => resolve(e.data);
+    worker.postMessage({ type: "GET_VERSION" }, [ch.port2]);
+    setTimeout(() => resolve(null), 1500);
+  });
+}
+
+async function showVersion() {
+  const worker = navigator.serviceWorker.controller || swReg?.active;
+  if (!worker) return;
+  const v = await askVersion(worker);
+  // An older service worker can't answer; show that instead of hiding the label.
+  els.version.textContent = v ? `Version ${v}` : "Version unknown (tap to check for updates)";
+  els.version.hidden = false;
+}
+
+function offerUpdate(worker) {
+  askVersion(worker).then((v) => {
+    els.updateText.textContent = v ? `Version ${v} is ready.` : "A new version is ready.";
+    els.update.hidden = false;
+    els.updateBtn.onclick = () => {
+      els.updateBtn.disabled = true;
+      els.updateBtn.textContent = "Updating…";
+      worker.postMessage({ type: "SKIP_WAITING" });
+    };
+  });
+}
+
+els.updateLater.addEventListener("click", () => { els.update.hidden = true; });
+
+els.version.addEventListener("click", async () => {
+  if (!swReg) return;
+  toast("Checking for updates…");
+  try { await swReg.update(); } catch { toast("Couldn't check. Are you offline?"); return; }
+  setTimeout(() => { if (els.update.hidden) toast("You're on the latest version."); }, 1500);
+});
+
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadController) {                       // an update just took over: reload into it
+      if (!reloading) { reloading = true; location.reload(); }
+    } else {                                   // very first install: no reload needed
+      showVersion();
+    }
+  });
+
+  window.addEventListener("load", async () => {
+    try { swReg = await navigator.serviceWorker.register("sw.js"); } catch { return; }
+    showVersion();
+    if (swReg.waiting && navigator.serviceWorker.controller) offerUpdate(swReg.waiting);
+    swReg.addEventListener("updatefound", () => {
+      const nw = swReg.installing;
+      nw?.addEventListener("statechange", () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller) offerUpdate(nw);
+      });
+    });
+    // An installed app can stay open for days: look for updates whenever it comes back to the foreground.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") swReg.update().catch(() => {});
+    });
+  });
 }
