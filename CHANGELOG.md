@@ -3,6 +3,9 @@
 Versioning: `MAJOR.MINOR.PATCH`. Bump MINOR for a bundle of new features, PATCH for bug fixes.
 The version lives in ONE place: `APP_VERSION` at the top of `sw.js`. Bump it on every deploy.
 
+## 1.1.2
+- Fix: app files are now requested with a version in the URL (`?v=`), so Hostinger's CDN/server cache can't serve stale CSS/JS.
+
 ## 1.1.1 - 2026-10-10
 - Fix: stale cached files could mix an old app.js with a new index.html and crash the app.
 - New "Reset app" safety net: if the app fails to start, a red bar offers a one-tap cache reset (stays signed in).

@@ -6,7 +6,7 @@ import {
 import {
   getDatabase, ref, onValue, push, update, remove, set
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-import { firebaseConfig, ownerEmails } from "./firebase-config.js";
+import { firebaseConfig, ownerEmails } from "./firebase-config.js?v=1.1.2";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
