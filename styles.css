@@ -82,6 +82,7 @@ input::placeholder { color: #8b8f9b; }
   background: var(--grey); color: #fff; font-size: 1.1rem; font-weight: 500;
   box-shadow: 0 2px 4px rgba(0,0,0,.2);
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation;
+  position: relative;
 }
 .chip.bought { background: var(--teal); }
 .chip.bought::before { content: "✓ "; font-size: .8em; }
@@ -116,4 +117,18 @@ dialog label { display: block; margin: 12px 0 6px; font-weight: 500; }
 .chip.ghost {
   position: fixed; left: 0; top: 0; margin: 0; z-index: 50; pointer-events: none; opacity: .95;
   box-shadow: 0 10px 24px rgba(0, 0, 0, .35); transform: scale(1.04);
+}
+
+/* hold 2s to delete: progress fill, then armed state with an X badge */
+.chip.pressing {
+  background-image: linear-gradient(rgba(0, 0, 0, .28), rgba(0, 0, 0, .28));
+  background-repeat: no-repeat; background-position: left center;
+  animation: hold 1.6s linear forwards;
+}
+@keyframes hold { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+.chip.armed { background: #b3261e; padding-right: 60px; animation: none; }
+.chip.armed::after {
+  content: "\2715"; position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 40px; height: 40px; border-radius: 50%; background: #fff; color: #b3261e;
+  display: grid; place-items: center; font-size: 1.2rem; font-weight: 700;
 }

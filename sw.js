@@ -1,5 +1,5 @@
 // Offline app shell. Firebase data/auth calls are never cached here.
-const VERSION = "v3";
+const VERSION = "v4";
 const CACHE = `supermkt-${VERSION}`;
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "firebase-config.js",

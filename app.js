@@ -40,6 +40,7 @@ let unsubscribeConn = null;
 let hideBought = store.get(HIDE_KEY) === "1";
 let editingId = null;
 let editMode = false;
+let armedId = null;
 
 function loadCache() {
   try { return JSON.parse(store.get(CACHE_KEY)) || {}; } catch { return {}; }
@@ -201,6 +202,7 @@ function render() {
       b.type = "button";
       b.className = "chip" + (e.bought ? " bought" : "");
       b.dataset.id = e.id;
+      if (e.id === armedId) b.classList.add("armed");
       b.setAttribute("aria-pressed", String(e.bought));
       b.textContent = e.name;
       box.append(b);
@@ -209,7 +211,7 @@ function render() {
   }
 
   els.banner.hidden = !editMode;
-  els.hint.textContent = editMode ? "" : "Tap an item to check it off. Use the pencil to edit or reorder.";
+  els.hint.textContent = editMode ? "" : "Tap an item to check it off. Hold it for 2 seconds to delete. Use the pencil to edit or reorder.";
   document.body.classList.toggle("editing", editMode);
 
   els.cats.replaceChildren(...[...allCategories().values()].sort().map((c) => {
@@ -227,6 +229,7 @@ const drag = {
 };
 
 els.editBtn.addEventListener("click", () => {
+  armedId = null;
   editMode = !editMode;
   els.editBtn.setAttribute("aria-pressed", String(editMode));
   const tip = editMode ? "Done editing" : "Edit and reorder items";
@@ -363,11 +366,85 @@ function toggle(id) {
   update(ref(db, `items/${id}`), { bought: !it.bought, ...stamp() }).catch((e) => toast(e.message));
 }
 
-els.list.addEventListener("click", (ev) => {
+/* ---------- hold 2s to delete (normal mode) ---------- */
+const HOLD_MS = 2000;
+const X_ZONE = 62;          // px at the right edge of an armed chip that count as the X
+const press = { timer: null, show: null, chip: null, armedThisPress: false, x: 0, y: 0 };
+let suppressClickUntil = 0;
+let disarmTimer = null;
+
+function removeItem(id) {
+  const name = norm(items[id]?.name);
+  remove(ref(db, `items/${id}`)).catch((e) => toast(e.message));
+  toast(`Deleted "${name}"`);
+}
+
+function arm(id) {
+  armedId = id;
+  clearTimeout(disarmTimer);
+  disarmTimer = setTimeout(disarm, 6000);
+  render();
+}
+
+function disarm() {
+  if (armedId === null) return;
+  armedId = null;
+  clearTimeout(disarmTimer);
+  render();
+}
+
+function endPress() {
+  clearTimeout(press.timer);
+  clearTimeout(press.show);
+  press.chip?.classList.remove("pressing");
+  if (press.armedThisPress) suppressClickUntil = Date.now() + 400;
+  press.chip = null;
+  press.armedThisPress = false;
+}
+
+els.list.addEventListener("pointerdown", (ev) => {
+  if (editMode) return;
   const b = ev.target.closest(".chip");
-  if (!b || drag.justDragged) return;
-  if (editMode) openEdit(b.dataset.id);
-  else toggle(b.dataset.id);
+  if (!b) return;
+  const id = b.dataset.id;
+  if (armedId !== null && armedId === id) return;   // handled by the click (X or cancel)
+  endPress();
+  press.chip = b;
+  press.x = ev.clientX; press.y = ev.clientY;
+  press.show = setTimeout(() => b.classList.add("pressing"), 400);
+  press.timer = setTimeout(() => {
+    press.armedThisPress = true;
+    navigator.vibrate?.(30);
+    arm(id);
+  }, HOLD_MS);
+});
+els.list.addEventListener("pointermove", (ev) => {
+  if (press.chip && !press.armedThisPress && Math.hypot(ev.clientX - press.x, ev.clientY - press.y) > 10) endPress();
+});
+for (const t of ["pointerup", "pointercancel", "pointerleave"]) {
+  els.list.addEventListener(t, () => { if (press.chip || press.armedThisPress) endPress(); });
+}
+// Tapping anywhere outside the armed chip cancels the delete.
+document.addEventListener("pointerdown", (ev) => {
+  if (armedId === null) return;
+  if (!ev.target.closest(`.chip[data-id="${armedId}"]`)) disarm();
+});
+
+els.list.addEventListener("click", (ev) => {
+  if (Date.now() < suppressClickUntil || drag.justDragged) return;
+  const b = ev.target.closest(".chip");
+  if (!b) return;
+  const id = b.dataset.id;
+  if (armedId !== null) {
+    const r = b.getBoundingClientRect();
+    const onX = id === armedId && ev.clientX >= r.right - X_ZONE;
+    const target = armedId;
+    disarm();
+    if (onX) removeItem(target);
+    return;
+  }
+  if (editMode) openEdit(id);
+  else toggle(id);
 });
 els.list.addEventListener("contextmenu", (ev) => {
   if (ev.target.closest(".chip")) ev.preventDefault();
@@ -434,11 +511,6 @@ els.editForm.addEventListener("submit", () => {
   editingId = null;
 });
 $("#edit-cancel").addEventListener("click", () => { editingId = null; els.edit.close(); });
-$("#edit-delete").addEventListener("click", () => {
-  if (editingId) remove(ref(db, `items/${editingId}`)).catch((e) => toast(e.message));
-  editingId = null;
-  els.edit.close();
-});
 
 /* ---------- PWA ---------- */
 if ("serviceWorker" in navigator) {
