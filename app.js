@@ -512,6 +512,17 @@ els.editForm.addEventListener("submit", () => {
 });
 $("#edit-cancel").addEventListener("click", () => { editingId = null; els.edit.close(); });
 
+/* ---------- clear (x) buttons inside inputs ---------- */
+// Keep focus (and the phone keyboard) on the input when the X is pressed.
+document.addEventListener("mousedown", (ev) => { if (ev.target.closest(".clear")) ev.preventDefault(); });
+document.addEventListener("click", (ev) => {
+  const btn = ev.target.closest(".clear");
+  if (!btn) return;
+  const input = btn.parentElement.querySelector("input");
+  input.value = "";
+  input.focus();
+});
+
 /* ---------- PWA ---------- */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

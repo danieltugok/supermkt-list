@@ -132,3 +132,20 @@ dialog label { display: block; margin: 12px 0 6px; font-weight: 500; }
   width: 40px; height: 40px; border-radius: 50%; background: #fff; color: #b3261e;
   display: grid; place-items: center; font-size: 1.2rem; font-weight: 700;
 }
+
+/* clear (x) button inside text inputs; only visible when the field has text */
+.field { position: relative; }
+.field input { padding-right: 50px; }
+.clear {
+  position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; font-size: .95rem; line-height: 1;
+  background: rgba(0, 0, 0, .12); color: var(--ink);
+}
+.clear:active { background: rgba(0, 0, 0, .22); }
+.field input:placeholder-shown ~ .clear { display: none; }
+/* desktop Chrome draws a datalist arrow at the right edge; keep the X clear of it */
+@media (hover: hover) {
+  .field input[list] { padding-right: 78px; }
+  .field input[list] ~ .clear { right: 32px; }
+}
