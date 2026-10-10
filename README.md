@@ -7,6 +7,7 @@ Firebase Authentication (Google) and Firebase Realtime Database.
 - Tap an item to check it off; the other phone updates live.
 - Items grouped by category; add items with an optional category.
 - Hold an item for 2 seconds: it turns red with an X; tap the X to delete it instantly (tap anywhere else to cancel).
+- Each category header has an X: tap it, then tap "Delete?" to confirm. Its items move to "No category" (with an Undo option for 7 seconds).
 - Edit mode (pencil icon): tap to rename/delete, hold and drag to reorder or move between categories.
 - Eye icon hides bought items; circular-arrow icon starts a new trip (unchecks everything).
 - Installable PWA with offline app shell and a cached copy of the last list.

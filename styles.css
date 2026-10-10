@@ -75,7 +75,15 @@ input::placeholder { color: #8b8f9b; }
 .bar { display: flex; align-items: center; gap: 4px; margin: 18px 0 8px; font-size: .95rem; color: var(--muted); }
 
 /* list */
-.group { background: var(--tan); padding: 8px; font-size: .9rem; margin-top: 14px; border-radius: 2px; }
+.group {
+  background: var(--tan); padding: 4px 4px 4px 8px; font-size: .9rem; margin-top: 14px; border-radius: 2px;
+  min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.group-x {
+  flex: none; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; background: rgba(59, 42, 26, .12); color: var(--ink); font-size: .9rem; line-height: 1;
+}
+.group-x:active { background: rgba(59, 42, 26, .28); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .chip {
   flex: 1 1 auto; min-height: 50px; padding: 12px 14px; border: 0; border-radius: var(--radius);
@@ -135,17 +143,36 @@ dialog label { display: block; margin: 12px 0 6px; font-weight: 500; }
 
 /* clear (x) button inside text inputs; only visible when the field has text */
 .field { position: relative; }
-.field input { padding-right: 50px; }
+.field input { padding-right: 90px; }
 .clear {
-  position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+  position: absolute; right: 47px; top: 50%; transform: translateY(-50%);
   width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
   display: grid; place-items: center; font-size: .95rem; line-height: 1;
   background: rgba(0, 0, 0, .12); color: var(--ink);
 }
 .clear:active { background: rgba(0, 0, 0, .22); }
 .field input:placeholder-shown ~ .clear { display: none; }
-/* desktop Chrome draws a datalist arrow at the right edge; keep the X clear of it */
-@media (hover: hover) {
-  .field input[list] { padding-right: 78px; }
-  .field input[list] ~ .clear { right: 32px; }
+
+/* category dropdown */
+.chev {
+  position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink);
+  display: grid; place-items: center;
 }
+.chev:active { background: rgba(0, 0, 0, .12); }
+.chev svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.field.open .chev svg { transform: rotate(180deg); }
+.menu {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; margin: 0; padding: 4px; list-style: none;
+  background: #fff; border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+  max-height: 40vh; overflow-y: auto;
+}
+.menu li { padding: 12px; border-radius: 4px; cursor: pointer; }
+.menu li[role="option"]:hover, .menu li[aria-selected="true"] { background: var(--field); }
+.menu li.empty { color: var(--muted); cursor: default; font-size: .9rem; }
+dialog { overflow: visible; }
+
+#toast.has-action { pointer-events: auto; }
+.toast-action { background: none; border: 0; color: #9ad7ff; font-weight: 600; margin-left: 12px; padding: 4px 8px; }
+
+.group-x.armed { width: auto; padding: 0 14px; border-radius: 17px; background: #b3261e; color: #fff; font-weight: 600; font-size: .85rem; }

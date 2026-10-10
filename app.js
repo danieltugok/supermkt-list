@@ -16,7 +16,7 @@ const itemsRef = ref(db, "items");
 const $ = (s) => document.querySelector(s);
 const els = {
   boot: $("#boot"), login: $("#login"), denied: $("#denied"), app: $("#app"),
-  list: $("#list"), count: $("#count"), cats: $("#cats"),
+  list: $("#list"), count: $("#count"),
   addForm: $("#add"), cat: $("#cat"), name: $("#name"),
   hide: $("#hide"), editBtn: $("#editmode"), banner: $("#edit-banner"), hint: $("#hint"), trip: $("#trip"), who: $("#who"), dot: $("#dot"),
   edit: $("#edit"), editForm: $("#edit-form"), editName: $("#edit-name"), editCat: $("#edit-cat"),
@@ -41,6 +41,8 @@ let hideBought = store.get(HIDE_KEY) === "1";
 let editingId = null;
 let editMode = false;
 let armedId = null;
+let armedCat = null;      // lowercase category key waiting for a second tap
+let catTimer = null;
 
 function loadCache() {
   try { return JSON.parse(store.get(CACHE_KEY)) || {}; } catch { return {}; }
@@ -54,11 +56,22 @@ function show(view) {
   els.app.hidden = view !== "app";
 }
 
-function toast(msg) {
-  els.toast.textContent = msg;
+function toast(msg, action) {
+  const text = document.createElement("span");
+  text.textContent = msg;
+  els.toast.replaceChildren(text);
+  els.toast.classList.toggle("has-action", !!action);
+  if (action) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "toast-action";
+    btn.textContent = action.label;
+    btn.addEventListener("click", () => { els.toast.classList.remove("show"); action.fn(); });
+    els.toast.append(btn);
+  }
   els.toast.classList.add("show");
   clearTimeout(toast.t);
-  toast.t = setTimeout(() => els.toast.classList.remove("show"), 2600);
+  toast.t = setTimeout(() => els.toast.classList.remove("show"), action ? 7000 : 2600);
 }
 
 /* ---------- auth ---------- */
@@ -190,7 +203,24 @@ function render() {
     const g = groups.get(key);
     const head = document.createElement("div");
     head.className = "group";
-    head.textContent = g.label || "No category";
+    const title = document.createElement("span");
+    title.textContent = g.label || "No category";
+    head.append(title);
+    if (g.label) {
+      const x = document.createElement("button");
+      x.type = "button";
+      x.className = "group-x";
+      x.dataset.cat = g.label;
+      if (armedCat === key) {
+        x.classList.add("armed");
+        x.textContent = "Delete?";
+        x.setAttribute("aria-label", `Confirm: delete category ${g.label}`);
+      } else {
+        x.innerHTML = "&#10005;";
+        x.setAttribute("aria-label", `Delete category ${g.label}`);
+      }
+      head.append(x);
+    }
     const box = document.createElement("div");
     box.className = "chips";
     g.list.sort((a, b) =>
@@ -214,11 +244,6 @@ function render() {
   els.hint.textContent = editMode ? "" : "Tap an item to check it off. Hold it for 2 seconds to delete. Use the pencil to edit or reorder.";
   document.body.classList.toggle("editing", editMode);
 
-  els.cats.replaceChildren(...[...allCategories().values()].sort().map((c) => {
-    const o = document.createElement("option");
-    o.value = c;
-    return o;
-  }));
 }
 
 /* ---------- interactions ---------- */
@@ -230,6 +255,7 @@ const drag = {
 
 els.editBtn.addEventListener("click", () => {
   armedId = null;
+  armedCat = null;
   editMode = !editMode;
   els.editBtn.setAttribute("aria-pressed", String(editMode));
   const tip = editMode ? "Done editing" : "Edit and reorder items";
@@ -366,6 +392,58 @@ function toggle(id) {
   update(ref(db, `items/${id}`), { bought: !it.bought, ...stamp() }).catch((e) => toast(e.message));
 }
 
+/* ---------- delete a category (its items move to "No category") ---------- */
+function deleteCategory(label) {
+  const key = label.toLowerCase();
+  const moved = Object.entries(items)
+    .filter(([, v]) => norm(v.category).toLowerCase() === key)
+    .sort(([, a], [, b]) =>
+      ((a.order ?? Infinity) - (b.order ?? Infinity)) ||
+      norm(a.name).localeCompare(norm(b.name), undefined, { sensitivity: "base" }));
+  if (!moved.length) return;
+
+  let next = nextOrder("");               // keep moved items after existing uncategorized ones
+  const patch = {}, undo = {};
+  for (const [id, v] of moved) {
+    patch[`${id}/category`] = "";
+    patch[`${id}/order`] = next !== undefined ? next++ : null;
+    patch[`${id}/updatedBy`] = who();
+    patch[`${id}/updatedAt`] = Date.now();
+    undo[`${id}/category`] = v.category;
+    undo[`${id}/order`] = Number.isFinite(v.order) ? v.order : null;
+  }
+  update(itemsRef, patch).catch((e) => toast(e.message));
+  const n = moved.length;
+  toast(`Deleted "${label}". ${n} item${n === 1 ? "" : "s"} moved to No category.`, {
+    label: "Undo",
+    fn: () => update(itemsRef, undo).catch((e) => toast(e.message))
+  });
+}
+
+function disarmCat() {
+  if (armedCat === null) return;
+  armedCat = null;
+  clearTimeout(catTimer);
+  render();
+}
+
+els.list.addEventListener("click", (ev) => {
+  const x = ev.target.closest(".group-x");
+  if (!x) return;
+  const key = x.dataset.cat.toLowerCase();
+  if (armedCat === key) {                      // second tap: confirmed
+    armedCat = null;
+    clearTimeout(catTimer);
+    deleteCategory(x.dataset.cat);
+  } else {                                     // first tap: ask "Delete?"
+    armedId = null;
+    armedCat = key;
+    clearTimeout(catTimer);
+    catTimer = setTimeout(disarmCat, 4000);
+    render();
+  }
+});
+
 /* ---------- hold 2s to delete (normal mode) ---------- */
 const HOLD_MS = 2000;
 const X_ZONE = 62;          // px at the right edge of an armed chip that count as the X
@@ -380,6 +458,7 @@ function removeItem(id) {
 }
 
 function arm(id) {
+  armedCat = null;
   armedId = id;
   clearTimeout(disarmTimer);
   disarmTimer = setTimeout(disarm, 6000);
@@ -426,6 +505,7 @@ for (const t of ["pointerup", "pointercancel", "pointerleave"]) {
 }
 // Tapping anywhere outside the armed chip cancels the delete.
 document.addEventListener("pointerdown", (ev) => {
+  if (armedCat !== null && !ev.target.closest(".group-x")) disarmCat();
   if (armedId === null) return;
   if (!ev.target.closest(`.chip[data-id="${armedId}"]`)) disarm();
 });
@@ -496,6 +576,7 @@ function openEdit(id) {
   editingId = id;
   els.editName.value = norm(it.name);
   els.editCat.value = norm(it.category);
+  els.editCat._combo?.close();
   els.edit.showModal();
 }
 
@@ -520,8 +601,87 @@ document.addEventListener("click", (ev) => {
   if (!btn) return;
   const input = btn.parentElement.querySelector("input");
   input.value = "";
+  input._combo?.close();
   input.focus();
 });
+
+/* ---------- category dropdown (type a new one, or pick an existing one) ---------- */
+function setupCombo(input, { onPick } = {}) {
+  const field = input.closest(".field");
+  const menu = document.createElement("ul");
+  menu.className = "menu";
+  menu.id = input.id + "-menu";
+  menu.setAttribute("role", "listbox");
+  menu.hidden = true;
+
+  const chev = document.createElement("button");
+  chev.type = "button";
+  chev.className = "chev";
+  chev.tabIndex = -1;
+  chev.setAttribute("aria-label", "Show existing categories");
+  chev.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  field.append(chev, menu);
+
+  input.setAttribute("role", "combobox");
+  input.setAttribute("aria-controls", menu.id);
+  input.setAttribute("aria-expanded", "false");
+  input.setAttribute("autocomplete", "off");
+
+  function fill(query) {
+    const q = query.toLowerCase();
+    const all = [...allCategories().values()].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    const list = all.filter((c) => c.toLowerCase().includes(q));
+    menu.replaceChildren();
+    if (!list.length) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = all.length ? "No match. It will be added as a new category." : "No categories yet. Type a new one.";
+      menu.append(li);
+      return;
+    }
+    const current = input.value.trim().toLowerCase();
+    for (const c of list) {
+      const li = document.createElement("li");
+      li.setAttribute("role", "option");
+      li.dataset.value = c;
+      li.textContent = c;
+      if (c.toLowerCase() === current) li.setAttribute("aria-selected", "true");
+      menu.append(li);
+    }
+  }
+  function open(showAll) {
+    fill(showAll ? "" : input.value.trim());
+    menu.hidden = false;
+    field.classList.add("open");
+    input.setAttribute("aria-expanded", "true");
+  }
+  function close() {
+    menu.hidden = true;
+    field.classList.remove("open");
+    input.setAttribute("aria-expanded", "false");
+  }
+  input._combo = { open, close };
+
+  chev.addEventListener("mousedown", (e) => e.preventDefault());
+  chev.addEventListener("click", () => (menu.hidden ? open(true) : close()));
+  menu.addEventListener("mousedown", (e) => e.preventDefault());
+  menu.addEventListener("click", (e) => {
+    const li = e.target.closest('[role="option"]');
+    if (!li) return;
+    input.value = li.dataset.value;
+    close();
+    onPick?.();
+  });
+  input.addEventListener("input", () => { if (input.value.trim()) open(false); else close(); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+    else if (e.key === "ArrowDown" && menu.hidden) { e.preventDefault(); open(true); }
+  });
+  document.addEventListener("pointerdown", (e) => { if (!field.contains(e.target)) close(); });
+}
+
+setupCombo(els.cat, { onPick: () => els.name.focus() });
+setupCombo(els.editCat);
 
 /* ---------- PWA ---------- */
 if ("serviceWorker" in navigator) {

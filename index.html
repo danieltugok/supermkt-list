@@ -53,10 +53,9 @@
     <form id="add" autocomplete="off">
       <label for="cat">Category:</label>
       <div class="field">
-        <input id="cat" list="cats" placeholder="Optional, e.g. Bakery" maxlength="40" enterkeyhint="next">
+        <input id="cat" placeholder="Optional, e.g. Bakery" maxlength="40" enterkeyhint="next">
         <button class="clear" type="button" tabindex="-1" aria-label="Clear category">&#10005;</button>
       </div>
-      <datalist id="cats"></datalist>
       <div class="row">
         <input id="name" placeholder="Add an item" maxlength="60" required enterkeyhint="done">
         <button class="add" type="submit" aria-label="Add item">+</button>
@@ -99,7 +98,7 @@
     <input id="edit-name" maxlength="60" required>
     <label for="edit-cat">Category</label>
     <div class="field">
-      <input id="edit-cat" list="cats" maxlength="40" placeholder="No category">
+      <input id="edit-cat" maxlength="40" placeholder="No category">
       <button class="clear" type="button" tabindex="-1" aria-label="Clear category">&#10005;</button>
     </div>
     <div class="actions">
