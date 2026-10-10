@@ -11,7 +11,7 @@ Firebase Authentication (Google) and Firebase Realtime Database.
 - Edit mode (pencil icon): tap to rename/delete, hold and drag to reorder or move between categories.
 - Eye icon hides bought items; circular-arrow icon starts a new trip (unchecks everything).
 - Installable PWA with offline app shell and a cached copy of the last list.
-- Google login, restricted to two allowed emails.
+- Google login, restricted to the owner plus people the owner invites from the app (Share button).
 
 ## Project files
 | File | Purpose |
@@ -57,18 +57,25 @@ Everything lives under `/items`. One child per item, keyed by an auto-generated 
 The earlier version of the site stored data under `/shoppingList`. That data is untouched but
 **not readable by the app or by the new rules**. A one-time migration into `/items` is a planned follow-up.
 
-### Who can access (security rules)
-`database.rules.json` denies everything by default and allows read/write on `/items` only for
-signed-in, email-verified Google accounts whose email is in the rules file
-(the two emails listed inside `database.rules.json`). It also validates the shape of each item.
+### Who can access (security rules + the Share button)
+- **Owner**: `danieltugok@gmail.com`, set directly in `database.rules.json` (and in `ownerEmails` in `firebase-config.js`
+  so the app shows the Share button). The owner can always open the list, even if the members list is empty.
+- **Members**: everyone else, stored in the database under `/access/members/{email with . replaced by ,}`
+  (e.g. `la,hagge89@gmail,com`). Members can read and edit the list; only the owner can add or remove members.
+- Only signed-in, email-verified Google accounts count, and the email must match exactly.
 
-**Rules are NOT part of the website.** Changing the file does nothing until you publish it:
+**To invite someone:** sign in as the owner, tap the **Share** icon (person with +), enter their Google email,
+tap **Invite**, then tap the send icon next to their address to message them the link. (The app cannot send email by
+itself; it opens your phone's share sheet or mail app.) To remove someone: tap the X, then **Remove?**.
+Typed the wrong email? Just remove it and invite the correct one. You can also edit `/access/members` in the console.
+
+**To change who the owner is** (or add a second owner): edit the owner email in `database.rules.json` (`.write` of
+`access/members/$key` and the items/members read rules) and in `ownerEmails`, then publish the rules.
+
+**Rules are NOT part of the website.** Changing `database.rules.json` does nothing until you publish it:
 1. Firebase console > **Realtime Database** > **Rules** tab.
 2. Replace the contents with the contents of `database.rules.json`.
 3. Click **Publish**.
-
-**To add or remove a person:** edit the emails in `database.rules.json` (they appear in both `.read` and `.write`),
-then publish as above. They must sign in with that exact Google email.
 
 ### How to log in and check things later
 **Check or edit the data**

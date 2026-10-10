@@ -8,3 +8,7 @@ export const firebaseConfig = {
   messagingSenderId: "428555858523",
   appId: "1:428555858523:web:1c0923931f66419745c57e"
 };
+
+// Who sees the Share button. This only controls the UI: the real permission check
+// is in database.rules.json (keep the two lists in sync).
+export const ownerEmails = ["danieltugok@gmail.com"];

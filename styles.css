@@ -176,3 +176,13 @@ dialog { overflow: visible; }
 .toast-action { background: none; border: 0; color: #9ad7ff; font-weight: 600; margin-left: 12px; padding: 4px 8px; }
 
 .group-x.armed { width: auto; padding: 0 14px; border-radius: 17px; background: #b3261e; color: #fff; font-weight: 600; font-size: .85rem; }
+
+/* share dialog */
+.small { font-size: .85rem; margin: 6px 0; }
+dialog h3 { font-size: 1rem; margin: 16px 0 6px; }
+.members { list-style: none; margin: 0; padding: 0; max-height: 30vh; overflow-y: auto; }
+.members li { display: flex; align-items: center; gap: 6px; padding: 8px 0; border-top: 1px solid #e6e8ef; }
+.members .email { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.members .badge { font-size: .75rem; background: var(--field); padding: 2px 8px; border-radius: 10px; color: var(--muted); }
+.members .group-x svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.members .none { color: var(--muted); font-size: .9rem; border-top: 1px solid #e6e8ef; padding: 10px 0; }

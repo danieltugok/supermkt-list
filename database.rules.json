@@ -3,17 +3,52 @@
     ".read": false,
     ".write": false,
     "items": {
-      ".read": "auth != null && auth.token.email_verified == true && (auth.token.email == 'danieltugok@gmail.com' || auth.token.email == 'lahagge89@gmail.com')",
-      ".write": "auth != null && auth.token.email_verified == true && (auth.token.email == 'danieltugok@gmail.com' || auth.token.email == 'lahagge89@gmail.com')",
+      ".read": "auth != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'danieltugok@gmail.com' || root.child('access/members').child(auth.token.email.toLowerCase().replace('.', ',')).exists())",
+      ".write": "auth != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'danieltugok@gmail.com' || root.child('access/members').child(auth.token.email.toLowerCase().replace('.', ',')).exists())",
       "$id": {
         ".validate": "newData.hasChildren(['name', 'bought'])",
-        "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
-        "category": { ".validate": "newData.isString() && newData.val().length <= 40" },
-        "bought": { ".validate": "newData.isBoolean()" },
-        "order": { ".validate": "newData.isNumber()" },
-        "updatedBy": { ".validate": "newData.isString() && newData.val().length <= 60" },
-        "updatedAt": { ".validate": "newData.isNumber()" },
-        "$other": { ".validate": false }
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60"
+        },
+        "category": {
+          ".validate": "newData.isString() && newData.val().length <= 40"
+        },
+        "bought": {
+          ".validate": "newData.isBoolean()"
+        },
+        "order": {
+          ".validate": "newData.isNumber()"
+        },
+        "updatedBy": {
+          ".validate": "newData.isString() && newData.val().length <= 60"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "access": {
+      "members": {
+        ".read": "auth != null && auth.token.email_verified == true && (auth.token.email.toLowerCase() == 'danieltugok@gmail.com' || root.child('access/members').child(auth.token.email.toLowerCase().replace('.', ',')).exists())",
+        "$key": {
+          ".write": "auth != null && auth.token.email_verified == true && auth.token.email.toLowerCase() == 'danieltugok@gmail.com'",
+          ".validate": "newData.hasChildren(['email', 'invitedAt']) && newData.child('email').isString() && newData.child('email').val().length <= 100 && newData.child('email').val().toLowerCase().replace('.', ',') == $key",
+          "email": {
+            ".validate": "newData.isString()"
+          },
+          "invitedBy": {
+            ".validate": "newData.isString() && newData.val().length <= 100"
+          },
+          "invitedAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
       }
     }
   }

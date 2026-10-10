@@ -4,9 +4,9 @@ import {
   onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getDatabase, ref, onValue, push, update, remove
+  getDatabase, ref, onValue, push, update, remove, set
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-import { firebaseConfig } from "./firebase-config.js";
+import { firebaseConfig, ownerEmails } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -18,6 +18,8 @@ const els = {
   boot: $("#boot"), login: $("#login"), denied: $("#denied"), app: $("#app"),
   list: $("#list"), count: $("#count"),
   addForm: $("#add"), cat: $("#cat"), name: $("#name"),
+  shareBtn: $("#share-btn"), share: $("#share"), shareForm: $("#share-form"), shareEmail: $("#share-email"),
+  shareMsg: $("#share-msg"), memberList: $("#member-list"),
   hide: $("#hide"), editBtn: $("#editmode"), banner: $("#edit-banner"), hint: $("#hint"), trip: $("#trip"), who: $("#who"), dot: $("#dot"),
   edit: $("#edit"), editForm: $("#edit-form"), editName: $("#edit-name"), editCat: $("#edit-cat"),
   toast: $("#toast")
@@ -41,6 +43,9 @@ let hideBought = store.get(HIDE_KEY) === "1";
 let editingId = null;
 let editMode = false;
 let armedId = null;
+let members = {};
+let isOwner = false;
+let unsubscribeMembers = null;
 let armedCat = null;      // lowercase category key waiting for a second tap
 let catTimer = null;
 
@@ -80,11 +85,16 @@ onAuthStateChanged(auth, (user) => {
   if (!user) {
     stopListening();
     items = {};
+    members = {};
+    isOwner = false;
+    els.shareBtn.hidden = true;
     store.del(CACHE_KEY);
     show("login");
     return;
   }
   els.who.textContent = user.email || "";
+  isOwner = ownerEmails.some((e) => e.toLowerCase() === (user.email || "").toLowerCase());
+  els.shareBtn.hidden = !isOwner;
   items = loadCache();
   show("app");
   render();
@@ -132,11 +142,18 @@ function startListening() {
   unsubscribeConn = onValue(ref(db, ".info/connected"), (s) => {
     els.dot.classList.toggle("online", !!s.val());
   });
+  if (isOwner) {
+    unsubscribeMembers = onValue(ref(db, "access/members"), (s) => {
+      members = s.val() || {};
+      renderMembers();
+    }, () => {});
+  }
 }
 
 function stopListening() {
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   if (unsubscribeConn) { unsubscribeConn(); unsubscribeConn = null; }
+  if (unsubscribeMembers) { unsubscribeMembers(); unsubscribeMembers = null; }
 }
 
 /* ---------- helpers ---------- */
@@ -682,6 +699,111 @@ function setupCombo(input, { onPick } = {}) {
 
 setupCombo(els.cat, { onPick: () => els.name.focus() });
 setupCombo(els.editCat);
+
+/* ---------- share this list (owner only) ---------- */
+const emailKey = (e) => e.trim().toLowerCase().replace(/\./g, ",");
+const EMAIL_RE = /^[^\s@,$#\[\]\/]+@[^\s@,$#\[\]\/]+\.[^\s@,$#\[\]\/]+$/;
+let pendingRemove = null;
+let removeTimer = null;
+
+const SEND_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>';
+
+function renderMembers() {
+  const ul = els.memberList;
+  ul.replaceChildren();
+  const rows = Object.entries(members)
+    .map(([key, v]) => ({ key, email: String(v?.email || key.replace(/,/g, ".")) }))
+    .sort((a, b) => a.email.localeCompare(b.email));
+
+  for (const o of ownerEmails) {
+    const li = document.createElement("li");
+    const em = document.createElement("span"); em.className = "email"; em.textContent = o;
+    const badge = document.createElement("span"); badge.className = "badge"; badge.textContent = "Owner";
+    li.append(em, badge);
+    ul.append(li);
+  }
+  if (!rows.length) {
+    const li = document.createElement("li");
+    li.className = "none";
+    li.textContent = "No one else yet. Invite someone above.";
+    ul.append(li);
+  }
+  for (const r of rows) {
+    const li = document.createElement("li");
+    const em = document.createElement("span"); em.className = "email"; em.textContent = r.email;
+
+    const send = document.createElement("button");
+    send.type = "button"; send.className = "group-x"; send.dataset.act = "send"; send.dataset.email = r.email;
+    send.setAttribute("aria-label", `Send invite to ${r.email}`);
+    send.innerHTML = SEND_ICON;
+
+    const rm = document.createElement("button");
+    rm.type = "button"; rm.className = "group-x"; rm.dataset.act = "remove"; rm.dataset.key = r.key;
+    if (pendingRemove === r.key) {
+      rm.classList.add("armed"); rm.textContent = "Remove?";
+      rm.setAttribute("aria-label", `Confirm: remove ${r.email}`);
+    } else {
+      rm.innerHTML = "&#10005;";
+      rm.setAttribute("aria-label", `Remove ${r.email}`);
+    }
+    li.append(em, send, rm);
+    ul.append(li);
+  }
+}
+
+async function sendInvite(email) {
+  const url = location.origin + location.pathname.replace(/index\.html$/, "");
+  const text = `I added you to our grocery list. Open the link, tap "Sign in with Google" and use ${email}.`;
+  if (navigator.share) {
+    try { await navigator.share({ title: "Join our grocery list", text, url }); } catch { /* cancelled */ }
+    return;
+  }
+  location.href = `mailto:${email}?subject=${encodeURIComponent("Join our grocery list")}&body=${encodeURIComponent(text + "\n\n" + url)}`;
+}
+
+els.shareBtn.addEventListener("click", () => {
+  els.shareMsg.textContent = "";
+  els.shareEmail.value = "";
+  pendingRemove = null;
+  renderMembers();
+  els.share.showModal();
+});
+$("#share-close").addEventListener("click", () => els.share.close());
+
+els.shareForm.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const email = els.shareEmail.value.trim().toLowerCase();
+  const say = (m) => { els.shareMsg.textContent = m; };
+  if (!EMAIL_RE.test(email) || email.length > 100) return say("That doesn't look like a valid email address.");
+  if (ownerEmails.some((o) => o.toLowerCase() === email)) return say("That's the owner's address; it already has access.");
+  if (members[emailKey(email)]) return say(`${email} is already on the list.`);
+  try {
+    await set(ref(db, `access/members/${emailKey(email)}`), {
+      email, invitedBy: currentUser?.email || "", invitedAt: Date.now()
+    });
+    els.shareEmail.value = "";
+    say(`${email} can now sign in. Tap the send icon next to their address to message them the link.`);
+  } catch (e) {
+    say("Couldn't add: " + e.message);
+  }
+});
+
+els.memberList.addEventListener("click", (ev) => {
+  const b = ev.target.closest("button[data-act]");
+  if (!b) return;
+  if (b.dataset.act === "send") { sendInvite(b.dataset.email); return; }
+  const key = b.dataset.key;
+  if (pendingRemove === key) {
+    pendingRemove = null;
+    clearTimeout(removeTimer);
+    remove(ref(db, `access/members/${key}`)).catch((e) => toast(e.message));
+  } else {
+    pendingRemove = key;
+    clearTimeout(removeTimer);
+    removeTimer = setTimeout(() => { pendingRemove = null; renderMembers(); }, 4000);
+    renderMembers();
+  }
+});
 
 /* ---------- PWA ---------- */
 if ("serviceWorker" in navigator) {
