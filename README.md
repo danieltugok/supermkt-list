@@ -9,6 +9,7 @@ Firebase Authentication (Google) and Firebase Realtime Database.
 - Hold an item for 2 seconds: it turns red with an X; tap the X to delete it instantly (tap anywhere else to cancel).
 - Each category header has an X: tap it, then tap "Delete?" to confirm. Its items move to "No category" (with an Undo option for 7 seconds).
 - Edit mode (pencil icon): tap to rename/delete, hold and drag to reorder or move between categories.
+- Funnel icon: choose which categories to display (saved on each device; a badge shows how many are hidden).
 - Eye icon hides bought items; circular-arrow icon starts a new trip (unchecks everything).
 - Installable PWA with offline app shell and a cached copy of the last list.
 - Google login, restricted to the owner plus people the owner invites from the app (Share button).

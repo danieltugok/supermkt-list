@@ -3,7 +3,7 @@
 // Bump this on EVERY deploy (MINOR for new features, PATCH for fixes) and add a line to CHANGELOG.md.
 // Phones only notice an update when this file changes.
 // ---------------------------------------------------------------------------
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.1.0";
 
 const CACHE = `supermkt-${APP_VERSION}`;   // app files, replaced on every version
 const SDK_CACHE = "supermkt-sdk-1";          // Firebase SDK modules (versioned URLs, kept between app versions)

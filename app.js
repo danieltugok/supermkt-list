@@ -24,7 +24,8 @@ const els = {
   edit: $("#edit"), editForm: $("#edit-form"), editName: $("#edit-name"), editCat: $("#edit-cat"),
   toast: $("#toast"),
   update: $("#update"), updateText: $("#update-text"), updateBtn: $("#update-btn"), updateLater: $("#update-later"),
-  version: $("#version")
+  version: $("#version"),
+  filterBtn: $("#filter-btn"), filterBadge: $("#filter-badge"), filter: $("#filter"), filterList: $("#filter-list")
 };
 
 /* ---------- tiny safe storage ---------- */
@@ -36,12 +37,19 @@ const store = {
 
 const CACHE_KEY = "supermkt:items";
 const HIDE_KEY = "supermkt:hideBought";
+const HIDDEN_CATS_KEY = "supermkt:hiddenCats";
 
 let currentUser = null;
 let items = {};
 let unsubscribe = null;
 let unsubscribeConn = null;
 let hideBought = store.get(HIDE_KEY) === "1";
+// Categories the user chose NOT to see on this device (lowercase keys; "" = No category).
+let hiddenCats = new Set((() => {
+  try { const a = JSON.parse(store.get(HIDDEN_CATS_KEY)); return Array.isArray(a) ? a.filter((x) => typeof x === "string") : []; }
+  catch { return []; }
+})());
+const saveHidden = () => store.set(HIDDEN_CATS_KEY, JSON.stringify([...hiddenCats]));
 let editingId = null;
 let editMode = false;
 let armedId = null;
@@ -193,15 +201,23 @@ function render() {
     order: Number.isFinite(v.order) ? v.order : undefined
   })).filter((e) => e.name);
 
-  const done = entries.filter((e) => e.bought).length;
-  els.count.textContent = entries.length ? `${done} of ${entries.length} bought` : "";
+  // Category filter (paused in edit mode so dragging between categories always works).
+  const existing = new Set(entries.map((e) => e.category.toLowerCase()));
+  const hiddenNow = [...hiddenCats].filter((k) => existing.has(k)).length;
+  const shown = editMode ? entries : entries.filter((e) => !hiddenCats.has(e.category.toLowerCase()));
+  els.filterBadge.hidden = hiddenNow === 0;
+  els.filterBadge.textContent = String(hiddenNow);
+  els.filterBtn.setAttribute("aria-pressed", String(hiddenNow > 0));
+
+  const done = shown.filter((e) => e.bought).length;
+  els.count.textContent = shown.length ? `${done} of ${shown.length} bought` : "";
   const hideTip = hideBought ? "Show bought items" : "Hide bought items";
   els.hide.setAttribute("aria-pressed", String(hideBought));
   els.hide.setAttribute("aria-label", hideTip);
   els.hide.dataset.tip = hideTip;
 
   const groups = new Map();
-  for (const e of entries) {
+  for (const e of shown) {
     if (hideBought && !editMode && e.bought) continue;
     const key = e.category.toLowerCase();
     if (!groups.has(key)) groups.set(key, { label: e.category, list: [] });
@@ -215,7 +231,14 @@ function render() {
   if (!keys.length) {
     const p = document.createElement("p");
     p.className = "empty";
-    p.textContent = entries.length ? "Everything is bought 🎉" : "Your list is empty. Add your first item above.";
+    if (entries.length && !shown.length) {
+      p.append("Every category is hidden by your filter. ");
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "link"; b.dataset.act = "show-all"; b.textContent = "Show all";
+      p.append(b);
+    } else {
+      p.textContent = entries.length ? "Everything is bought 🎉" : "Your list is empty. Add your first item above.";
+    }
     els.list.append(p);
   }
   for (const key of keys) {
@@ -263,6 +286,7 @@ function render() {
   els.hint.textContent = editMode ? "" : "Tap an item to check it off. Hold it for 2 seconds to delete. Use the pencil to edit or reorder.";
   document.body.classList.toggle("editing", editMode);
 
+  if (els.filter.open) renderFilter();
 }
 
 /* ---------- interactions ---------- */
@@ -568,6 +592,9 @@ els.addForm.addEventListener("submit", (ev) => {
       name, category, bought: false, ...stamp(), ...(order !== undefined ? { order } : {})
     }).catch((e) => toast(e.message));
   }
+  if (!editMode && hiddenCats.has(category.toLowerCase())) {
+    toast(`Added to "${category || "No category"}", which your filter hides.`);
+  }
   els.name.value = "";
   els.name.focus();
 });
@@ -701,6 +728,68 @@ function setupCombo(input, { onPick } = {}) {
 
 setupCombo(els.cat, { onPick: () => els.name.focus() });
 setupCombo(els.editCat);
+
+/* ---------- category filter (per device) ---------- */
+function renderFilter() {
+  const counts = new Map();
+  for (const v of Object.values(items)) {
+    if (!norm(v.name)) continue;
+    const label = norm(v.category);
+    const k = label.toLowerCase();
+    const c = counts.get(k) || { label, n: 0 };
+    c.n += 1;
+    counts.set(k, c);
+  }
+  const keys = [...counts.keys()].sort((a, b) =>
+    a === "" ? -1 : b === "" ? 1 : a.localeCompare(b, undefined, { sensitivity: "base" }));
+  const focusedKey = document.activeElement?.dataset?.key;
+
+  els.filterList.replaceChildren();
+  if (!keys.length) {
+    const li = document.createElement("li");
+    li.className = "none";
+    li.textContent = "No categories yet.";
+    els.filterList.append(li);
+    return;
+  }
+  for (const k of keys) {
+    const c = counts.get(k);
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.dataset.key = k;
+    cb.checked = !hiddenCats.has(k);
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = c.label || "No category";
+    const cnt = document.createElement("span");
+    cnt.className = "cnt";
+    cnt.textContent = String(c.n);
+    label.append(cb, name, cnt);
+    li.append(label);
+    els.filterList.append(li);
+  }
+  if (focusedKey !== undefined) els.filterList.querySelector(`input[data-key="${CSS.escape(focusedKey)}"]`)?.focus();
+}
+
+els.filterBtn.addEventListener("click", () => { renderFilter(); els.filter.showModal(); });
+$("#filter-close").addEventListener("click", () => els.filter.close());
+els.filterList.addEventListener("change", (ev) => {
+  const cb = ev.target.closest("input[data-key]");
+  if (!cb) return;
+  if (cb.checked) hiddenCats.delete(cb.dataset.key); else hiddenCats.add(cb.dataset.key);
+  saveHidden();
+  render();
+});
+$("#filter-all").addEventListener("click", () => { hiddenCats.clear(); saveHidden(); render(); renderFilter(); });
+$("#filter-none").addEventListener("click", () => {
+  for (const v of Object.values(items)) if (norm(v.name)) hiddenCats.add(norm(v.category).toLowerCase());
+  saveHidden(); render(); renderFilter();
+});
+els.list.addEventListener("click", (ev) => {
+  if (ev.target.closest('[data-act="show-all"]')) { hiddenCats.clear(); saveHidden(); render(); }
+});
 
 /* ---------- share this list (owner only) ---------- */
 const emailKey = (e) => e.trim().toLowerCase().replace(/\./g, ",");

@@ -3,6 +3,11 @@
 Versioning: `MAJOR.MINOR.PATCH`. Bump MINOR for a bundle of new features, PATCH for bug fixes.
 The version lives in ONE place: `APP_VERSION` at the top of `sw.js`. Bump it on every deploy.
 
+## 1.1.0 - 2026-10-10
+- Category filter (funnel icon): choose which categories are shown. Saved per device, new categories show by default,
+  a badge shows how many are hidden, and the filter is paused in edit mode.
+- Version label always shows in the footer (with a fallback when an older service worker can't report it).
+
 ## 1.0.0 - 2026-10-10
 First versioned release.
 - Shared real-time grocery list (Firebase Realtime Database), Google login, installable PWA with offline support.

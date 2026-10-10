@@ -71,6 +71,10 @@
     <div class="bar">
       <span id="count"></span>
       <span class="spacer"></span>
+      <button id="filter-btn" class="icon-btn" type="button" data-tip="Choose which categories to show" aria-label="Choose which categories to show" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg>
+        <span id="filter-badge" class="badge-dot" hidden></span>
+      </button>
       <button id="editmode" class="icon-btn" type="button" data-tip="Edit and reorder items" aria-label="Edit and reorder items" aria-pressed="false">
         <svg class="i-pencil" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
         <svg class="i-done" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
@@ -84,7 +88,7 @@
       </button>
     </div>
 
-    <p id="edit-banner" class="banner" hidden>Edit mode: tap an item to rename it or change its category. Hold and drag to move it, or drop it under another category to change its category.</p>
+    <p id="edit-banner" class="banner" hidden>Edit mode: tap an item to rename it or change its category. Hold and drag to move it, or drop it under another category to change its category. Your category filter is paused while editing.</p>
     <div id="list"></div>
     <p id="hint" class="hint muted center"></p>
 
@@ -118,6 +122,17 @@
       <button class="primary" type="submit">Save</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="filter">
+  <h2>Show categories</h2>
+  <p class="muted small">Only checked categories are shown. This is saved on this device only, and new categories are shown by default.</p>
+  <div class="bar" style="margin:4px 0 0">
+    <button id="filter-all" class="link" type="button">Select all</button>
+    <button id="filter-none" class="link" type="button">Clear all</button>
+  </div>
+  <ul id="filter-list" class="filters"></ul>
+  <div class="actions"><span class="spacer"></span><button id="filter-close" class="primary" type="button">Done</button></div>
 </dialog>
 
 <dialog id="share">
