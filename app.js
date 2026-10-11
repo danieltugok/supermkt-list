@@ -6,10 +6,11 @@ import {
 import {
   getDatabase, ref, onValue, push, update, remove, set
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-import { firebaseConfig, ownerEmails } from "./firebase-config.js";
 
 const APP_VERSION = window.APP_VERSION || "unknown";
 console.log(`App Version: ${APP_VERSION}`);
+// Loaded with the version in the URL so a stale cached copy can never be reused after an update.
+const { firebaseConfig, ownerEmails } = await import("./firebase-config.js?v=" + APP_VERSION);
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);

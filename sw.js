@@ -10,7 +10,7 @@ const SHELL = [
 
 self.addEventListener("install", (e) => {
   // Fetch fresh copies (bypass the HTTP cache). No skipWaiting(): the page asks the user first.
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u === "./" ? u : `${u}?v=${APP_VERSION}`, { cache: "reload" })))));
 });
 
 self.addEventListener("activate", (e) => {
